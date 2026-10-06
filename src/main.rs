@@ -10,7 +10,8 @@ use sysinfo::{Disks, System};
 
 use tunjukin_suhu_cpu_windows::CpuTemperature;
 
-/// All the data we collect for one "snapshot".
+/**
+**/
 struct Sample {
     timestamp: String,
     cpu_temp: Option<f64>,
@@ -24,11 +25,13 @@ struct Sample {
     mem_total_gb: Option<f64>,
 }
 
-/// Where the outputs live.
+// * Text file and db for storing results
 const DB_PATH: &str = "sysmon.db";
 const TXT_PATH: &str = "sysmon.txt";
 
+// * Main entry point of program
 fn main() -> Result<()> {
+    
     let mut s = System::new();
     s.refresh_all();
     std::thread::sleep(sysinfo::MINIMUM_CPU_UPDATE_INTERVAL);
@@ -105,7 +108,7 @@ fn collect(sys: System) -> Sample {
     }
 }
 
-/// CPU temperature: take the max across all thermal zones (°C).
+// returns CPU temperature if able
 fn read_cpu_temp() -> Option<f64> {
     let mut cpu_temp: Option<f64> = None;
     
@@ -128,6 +131,7 @@ fn read_gpu() -> Option<(String, f64)> {
     read_gpu_amd()
 }
 
+// Get details of NVIDIA GPU: name, utilization
 fn read_gpu_nvidia() -> Option<(String, f64)> {
     let out = Command::new("nvidia-smi")
         .args([
@@ -136,10 +140,11 @@ fn read_gpu_nvidia() -> Option<(String, f64)> {
         ])
         .output()
         .ok()?;
-    if !out.status.success() {
+    if !out.status.success() { // return None if status is fail
         return None;
     }
     let stdout = String::from_utf8(out.stdout).ok()?;
+    println!("nvidia-smi stdout is: {}", stdout);
     // Take first GPU line.
     let line = stdout.lines().next()?;
     let mut parts = line.splitn(2, ',');
